@@ -1,5 +1,4 @@
 import cv2
-from utilities import mkdir, set_foreground
 
 from utilities import get_screenshot
 
@@ -10,9 +9,10 @@ class minimap():
         self.minimap_half_size = 80
         self.minimap_img_last_frame = None
         self.minimap_img = None
-        self.anchors_half_size = 30
+        self.anchors_half_size = 25
         self.anchor_imgs = []
         self.anchor_rec_list = []
+
 
     def get_minimap(self):
         bbox = (self.center_point[0] - self.minimap_half_size,
@@ -41,8 +41,11 @@ class minimap():
 
     def draw_rec(self):
         # image = cv2.rectangle(image, start_point, end_point, color, thickness)
-        colors = ((255, 0, 0),(0, 255, 0),(0, 0, 255),(255, 0, 255))
-        print(self.anchor_rec_list)
+        colors = ((255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 0, 255))
         for i in range(len(self.anchor_rec_list)):
             rec = self.anchor_rec_list[i]
-            self.minimap_img = cv2.rectangle(self.minimap_img, (rec[0], rec[1]), (rec[2], rec[3]), colors[i], 2)
+            self.minimap_img = cv2.rectangle(self.minimap_img, (rec[0], rec[2]), (rec[1], rec[3]), colors[i], 1)
+            text = str(i)
+            org = (rec[0], rec[2])
+            self.minimap_img = cv2.putText(self.minimap_img, text, org, cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 2,
+                                           cv2.LINE_AA)
