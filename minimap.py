@@ -10,8 +10,9 @@ from utilities import get_screenshot, angle
 # noinspection PyStatementEffect
 class MiniMap():
     def __init__(self):
+        self.orientation = None
         self.magnitude = 3
-        self.angle = None
+        self.move_angle = None
         self.move_vector = []
         self.player_arrow_img = None
         self.show_minimap_start_time = None
@@ -77,8 +78,8 @@ class MiniMap():
                     [self.offsets[3][0] - offsets[3][0], self.offsets[3][1] - offsets[3][1]]]
             magnitude = math.sqrt(sum(v ** 2 for v in move[0]))
             if magnitude > self.magnitude:
-                self.angle = angle((0, self.magnitude), (move[most_confidence][0], move[most_confidence][1]))
-                print(self.angle)
+                self.move_angle = angle((0, self.magnitude), (move[most_confidence][0], move[most_confidence][1]))
+                print(self.move_angle)
                 self.minimap_img_last_frame = self.minimap_img
 
     def show_minimap(self):
@@ -89,16 +90,17 @@ class MiniMap():
         if not self.draw_minimap:
             img = self.minimap_img
         else:
+            self.draw_orientation_text(self.orientation)
             img = self.draw_minimap_img
 
         cv2.imshow('Computer Vision', img)
+        cv2.waitKey(1)
         self.draw_minimap_img = None
 
         self.show_minimap_start_time = time.time()
 
     def get_template_arrow(self):
-        template_arrow = cv2.imread(self.template_arrow_path)
-        return template_arrow
+        self.template_arrow = cv2.imread(self.template_arrow_path)
 
     def get_player_arrow(self):
         shape = self.minimap_img.shape
@@ -111,13 +113,36 @@ class MiniMap():
         return player_arrow_img
 
     def get_rotation(self):
-        template_arrow = self.get_template_arrow()
+        player_arrow = self.get_player_arrow()
+        rotate_angle = [0, 0]
+        for i in range(0, 360):
+            rotated_template_arrow = self.rotate_image(self.template_arrow, i)
+            res = cv2.matchTemplate(rotated_template_arrow, player_arrow, cv2.TM_CCOEFF_NORMED)
+            confidence = np.max(res)
+            if confidence > rotate_angle[1]:
+                rotate_angle = [i, confidence]
+        self.orientation = rotate_angle[0]
         pass
+
+    def rotate_image(self, image, angle):
+        h, w = image.shape[:2]
+        center = (w // 2, h // 2)
+        M = cv2.getRotationMatrix2D(center, 360 - angle, 1.0)
+        rotated = cv2.warpAffine(image, M, (w, h))
+        # cv2.imshow('rotated', rotated)
+        # cv2.waitKey(1)
+        return rotated
 
     def show_arrow(self):
         img = self.get_player_arrow()
         cv2.imshow('arrow', img)
         cv2.waitKey(1)
+
+    def draw_orientation_text(self, orientation, x=10, y=40):
+        text = "ori:" + str(orientation) + "\'"
+        org = (x, y)
+        self.draw_minimap_img = cv2.putText(self.draw_minimap_img, text, org, cv2.FONT_HERSHEY_SIMPLEX, 0.5,
+                                            (255, 255, 255), 1, cv2.LINE_AA)
 
     def draw_rec(self, index, confidence):
         if self.draw_minimap_img is None:

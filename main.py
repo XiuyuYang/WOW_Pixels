@@ -12,6 +12,8 @@ if __name__ == '__main__':
     # mm.show_arrow()
     while True:
         mm.get_minimap()
+        mm.get_template_arrow()
         mm.get_direction()
+        mm.get_rotation()
         mm.show_minimap()
-        mm.show_arrow()
+        # mm.show_arrow()
