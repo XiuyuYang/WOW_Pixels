@@ -8,6 +8,7 @@ from utilities import get_screenshot, vector_angle, rotate_image
 
 class MiniMap:
     def __init__(self):
+        self.path_img = None
         self.anchors = []
         self.orientation = None
         self.magnitude = 3
@@ -18,6 +19,7 @@ class MiniMap:
         self.minimap_img = None
         self.draw_minimap = True
         self.draw_minimap_img = None
+        self.save_path = "Path"
 
         self.get_anchors()
 
@@ -49,16 +51,17 @@ class MiniMap:
     def get_direction(self):
         most_confidence = 0
         angle = None
+        distance = None
         for anchor in self.anchors:
+            anchor.minimap_img_last_frame = self.path_img
             anchor.update_minimap_img(self.minimap_img)
             anchor.get_direction()
-            if anchor.moved_distance > self.magnitude and anchor.confidence > most_confidence:
+            if anchor.confidence > most_confidence:
                 most_confidence = anchor.confidence
                 angle = anchor.move_angle
-        if angle is not None:
-            self.move_angle = int(angle)
-            for anchor in self.anchors:
-                anchor.minimap_img_last_frame = self.minimap_img
+                distance = anchor.distance
+        self.move_angle = int(angle)
+        self.distance = distance
 
     def get_orientation(self):
         arrow = Arrow()
@@ -100,10 +103,19 @@ class MiniMap:
             self.draw_minimap_img = cv2.putText(self.draw_minimap_img, text, org, cv2.FONT_HERSHEY_SIMPLEX, 0.3,
                                                 (0, 255, 255), 1, cv2.LINE_AA)
 
+    def save_img(self, name):
+        if self.minimap_img is None:
+            self.get_minimap()
+        file_name = self.save_path + "/" + name + ".jpg"
+        cv2.imwrite(file_name, self.minimap_img)
+
+    def load_path_img(self, name):
+        self.path_img = cv2.imread(self.save_path + "/" + name + ".jpg")
+
 
 class Anchor:
     def __init__(self, minimap_img):
-        self.moved_distance = 0
+        self.distance = 0
         self.id = None
         self.draw_minimap_img = None
         self.confidence = None
@@ -131,12 +143,9 @@ class Anchor:
         res = cv2.matchTemplate(self.minimap_img_last_frame, self.img, cv2.TM_CCOEFF_NORMED)
         self.confidence = np.max(res)
         offset = (cv2.minMaxLoc(res)[3][0], cv2.minMaxLoc(res)[3][1])
-        if self.init_offset is None:
-            self.init_offset = offset
-        else:
-            move = [self.init_offset[0] - offset[0], self.init_offset[1] - offset[1]]
-            self.moved_distance = math.sqrt(sum(v ** 2 for v in move))
-            self.move_angle = vector_angle((0, 1), move)
+        move = self.center[0] - offset[0] - self.anchors_half_size, self.center[1] - offset[1] - self.anchors_half_size
+        self.distance = math.sqrt(sum(v ** 2 for v in move))
+        self.move_angle = vector_angle((0, -1), move)
 
     def update_minimap_img(self, minimap_img):
         self.minimap_img = minimap_img
