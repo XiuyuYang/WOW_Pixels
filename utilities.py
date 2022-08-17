@@ -37,3 +37,15 @@ def rotate_image(image, angle):
     # cv2.imshow('rotated', rotated)
     # cv2.waitKey(1)
     return rotated
+
+
+def get_delta_angle(angle1, angle2):
+    angle = abs(angle1 - angle2)
+    if angle > 180:
+        return 360 - angle
+    else:
+        return angle
+
+
+if __name__ == '__main__':
+    print(get_delta_angle(340, 10))

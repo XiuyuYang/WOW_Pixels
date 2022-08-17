@@ -1,5 +1,6 @@
 import math
 
+from os import walk
 import cv2
 import numpy as np
 
@@ -8,6 +9,10 @@ from utilities import get_screenshot, vector_angle, rotate_image
 
 class MiniMap:
     def __init__(self):
+        self.current_path_fname = None
+        self.path_img_list = []
+        self.record_img_index = 0
+        self.record_distance = 3
         self.path_img = None
         self.anchors = []
         self.orientation = None
@@ -48,20 +53,29 @@ class MiniMap:
             anchor.id = i
             self.anchors.append(anchor)
 
-    def get_direction(self):
+    def get_target(self):
         most_confidence = 0
         angle = None
         distance = None
         for anchor in self.anchors:
             anchor.minimap_img_last_frame = self.path_img
             anchor.update_minimap_img(self.minimap_img)
-            anchor.get_direction()
+            anchor.get_target()
             if anchor.confidence > most_confidence:
                 most_confidence = anchor.confidence
                 angle = anchor.move_angle
                 distance = anchor.distance
         self.move_angle = int(angle)
         self.distance = distance
+
+    def record_path(self, title="path"):
+        if self.distance > self.record_distance:
+            self.path_img = self.minimap_img
+            name = title + "_" + str(self.record_img_index)
+            self.save_img(name)
+            print("recorded:", self.record_img_index)
+            self.record_img_index += 1
+        pass
 
     def get_orientation(self):
         arrow = Arrow()
@@ -84,13 +98,21 @@ class MiniMap:
     def draw(self):
         if self.draw_minimap_img is None:
             self.draw_minimap_img = self.minimap_img.copy()
+        self.get_orientation()
         colors = ((255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 0, 255))
 
         # draw orientation
-        text = "ori:" + str(self.orientation) + "\'"
+        orientation = "ori:" + str(self.orientation) + "\'"
         org = (10, 40)
-        self.draw_minimap_img = cv2.putText(self.draw_minimap_img, text, org, cv2.FONT_HERSHEY_SIMPLEX, 0.5,
+        self.draw_minimap_img = cv2.putText(self.draw_minimap_img, orientation, org, cv2.FONT_HERSHEY_SIMPLEX, 0.4,
                                             (255, 255, 255), 1, cv2.LINE_AA)
+
+        # draw distance
+        distance = "dis:" + str(int(self.distance))
+        org = (10, 140)
+        self.draw_minimap_img = cv2.putText(self.draw_minimap_img, distance, org, cv2.FONT_HERSHEY_SIMPLEX, 0.4,
+                                            (255, 255, 255), 1, cv2.LINE_AA)
+
         # draw anchors rectangle
         for i in range(len(self.anchors)):
             anchor = self.anchors[i]
@@ -110,8 +132,39 @@ class MiniMap:
         cv2.imwrite(file_name, self.minimap_img)
 
     def load_path_img(self, name):
-        self.path_img = cv2.imread(self.save_path + "/" + name + ".jpg")
+        try:
+            self.path_img = cv2.imread(self.save_path + "/" + name)
+        except:
+            self.path_img = cv2.imread(self.save_path + "/" + "path_0.jpg")
 
+    def load_next_path_img(self):
+        fname = self.current_path_fname[:-4]
+        fname, index = fname.split("_")
+        index = str(int(index) + 1)
+        self.current_path_fname = fname + "_" + index + ".jpg"
+        print("loading next")
+        print(self.current_path_fname)
+        self.load_path_img(self.current_path_fname)
+
+    def load_path_img_list(self):
+        for (dirpath, dirnames, filenames) in walk(self.save_path):
+            self.path_img_list.extend(filenames)
+            break
+
+    def find_closest_point(self):
+        self.load_path_img_list()
+        closest_point = {}
+        for img_file_name in self.path_img_list:
+            path_img = cv2.imread(self.save_path + "/" + img_file_name)
+            res = cv2.matchTemplate(self.minimap_img, path_img, cv2.TM_CCOEFF_NORMED)
+            confidence = np.max(res)
+            closest_point[img_file_name] = confidence
+        self.current_path_fname = max(closest_point, key=closest_point.get)
+        print("Found closest path:", self.current_path_fname)
+
+    def init_path(self):
+        self.current_path_fname = "path_0.jpg"
+        self.load_path_img(self.current_path_fname)
 
 class Anchor:
     def __init__(self, minimap_img):
@@ -138,7 +191,7 @@ class Anchor:
         self.img = self.minimap_img[y_start:y_end, x_start:x_end]
         self.rec = [x_start, x_end, y_start, y_end]
 
-    def get_direction(self):
+    def get_target(self):
         self.get_anchor_img()
         res = cv2.matchTemplate(self.minimap_img_last_frame, self.img, cv2.TM_CCOEFF_NORMED)
         self.confidence = np.max(res)
