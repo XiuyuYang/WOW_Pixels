@@ -1,6 +1,6 @@
 import math
 
-from os import walk
+import os
 import cv2
 import numpy as np
 
@@ -9,9 +9,10 @@ from utilities import get_screenshot, vector_angle, rotate_image
 
 class MiniMap:
     def __init__(self):
+        self.distance = None
         self.current_path_fname = None
         self.path_img_list = []
-        self.record_img_index = 0
+        self.record_img_index = 1
         self.record_distance = 3
         self.path_img = None
         self.anchors = []
@@ -69,13 +70,20 @@ class MiniMap:
         self.distance = distance
 
     def record_path(self, title="path"):
+        self.get_minimap()
+        if self.path_img is None:
+            self.path_img = self.minimap_img
+            name = title + "_0"
+            self.save_img(name)
+            print("Start record")
+            return
+        self.get_target()
         if self.distance > self.record_distance:
             self.path_img = self.minimap_img
             name = title + "_" + str(self.record_img_index)
             self.save_img(name)
             print("recorded:", self.record_img_index)
             self.record_img_index += 1
-        pass
 
     def get_orientation(self):
         arrow = Arrow()
@@ -98,6 +106,8 @@ class MiniMap:
     def draw(self):
         if self.draw_minimap_img is None:
             self.draw_minimap_img = self.minimap_img.copy()
+        if self.distance is None:
+            return
         self.get_orientation()
         colors = ((255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 0, 255))
 
@@ -142,12 +152,12 @@ class MiniMap:
         fname, index = fname.split("_")
         index = str(int(index) + 1)
         self.current_path_fname = fname + "_" + index + ".jpg"
-        print("loading next")
-        print(self.current_path_fname)
+        if not os.path.isfile(self.save_path + "/" + self.current_path_fname):
+            self.current_path_fname = fname + "_0.jpg"
         self.load_path_img(self.current_path_fname)
 
     def load_path_img_list(self):
-        for (dirpath, dirnames, filenames) in walk(self.save_path):
+        for (dirpath, dirnames, filenames) in os.walk(self.save_path):
             self.path_img_list.extend(filenames)
             break
 
@@ -163,8 +173,10 @@ class MiniMap:
         print("Found closest path:", self.current_path_fname)
 
     def init_path(self):
-        self.current_path_fname = "path_0.jpg"
+        # self.current_path_fname = "path_1.jpg"
+        self.find_closest_point()
         self.load_path_img(self.current_path_fname)
+
 
 class Anchor:
     def __init__(self, minimap_img):

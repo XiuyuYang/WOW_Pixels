@@ -1,4 +1,5 @@
 import cv2
+import keyboard
 import numpy as np
 import win32gui
 from PIL import ImageGrab
@@ -45,6 +46,7 @@ def get_delta_angle(angle1, angle2):
         return 360 - angle
     else:
         return angle
+
 
 
 if __name__ == '__main__':
