@@ -10,3 +10,7 @@ Wow Bot using pure graphics
 added move to function
 
 ![15-08-2022](https://user-images.githubusercontent.com/54026897/184644537-3b374e76-0c2b-43b0-9ce5-9078f60795e3.gif)
+
+22-08-2022
+
+![GIF 2022-8-22 0-39-19](https://user-images.githubusercontent.com/54026897/185791373-6d380a70-ec44-4532-b80e-b15e79abe791.gif)
