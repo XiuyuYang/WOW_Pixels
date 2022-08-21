@@ -2,12 +2,13 @@ import time
 import mouse
 import keyboard
 
+import utilities
 from utilities import get_delta_angle
 
 
 class Move:
     def __init__(self):
-        self.right_btn_is_pressed = False
+        self.right_btn_is_pressed = False  # mouse.is_pressed seems does not work here so i set a flag
         self.move_mouse_pos = (1000, 500)
         self.minimap = None
         self.rotate_speed = 2
@@ -21,7 +22,7 @@ class Move:
             if self.right_btn_is_pressed:
                 mouse.release("right")
                 self.right_btn_is_pressed = False
-            return
+            return delta_angle
 
         if not self.right_btn_is_pressed:
             mouse.move(self.move_mouse_pos[0], self.move_mouse_pos[1])
@@ -42,18 +43,64 @@ class Move:
             rotate_value = -1 * delta_angle
 
         mouse.move(pos[0] + rotate_value * self.rotate_speed, pos[1])
+        return delta_angle
 
-    def move_forward(self):
+    def move_forward_patrol(self):
         keyboard.press("w")
         if self.minimap.distance < 2:
             # print("arrived", self.minimap.current_path_fname)
             self.minimap.load_next_path_img()
 
+    def move_forward(self):
+        if not keyboard.is_pressed("w"):
+            keyboard.press("w")
+
+    def rotate_to_target(self):
+        interact_key = "."
+        keyboard.press_and_release(interact_key)
+
     def stop_moving(self):
         mouse.release("right")
         keyboard.release("w")
+        # press w one more time for stop moving from right click or interact with target
+        keyboard.press_and_release("w")
+        if utilities.find_target(dead=True):
+            keyboard.press_and_release("tab")
 
     def patrol(self):
         self.minimap.get_minimap()
         self.rotate_to()
-        self.move_forward()
+        self.move_forward_patrol()
+
+    def go_to_target_range(self, index):
+        while True:
+            if not utilities.skill_in_range(index):
+                print("target is out of range, moving to the target.")
+                self.rotate_to_target()
+                self.move_forward()
+                time.sleep(1)
+            else:
+                self.stop_moving()
+                return
+
+    def move_back(self):
+        self.minimap.get_target()
+        if self.minimap.distance > 2:
+            print("coming back. distance:", self.minimap.distance)
+            self.right_btn_is_pressed = False
+            self.minimap.get_minimap()
+            self.rotate_speed = 1
+            while True:
+                angle = self.rotate_to()
+                # print(angle)
+                if angle < 2:
+                    self.rotate_speed = 2
+                    break
+            # while True:
+            #     self.minimap.get_target()
+            #     if self.minimap.distance > 2:
+            #         self.move_forward_patrol()
+            #     else:
+            #         break
+            self.move_forward_patrol()
+        print("moved back.")

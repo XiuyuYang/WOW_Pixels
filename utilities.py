@@ -48,6 +48,55 @@ def get_delta_angle(angle1, angle2):
         return angle
 
 
+def find_target(dead=False, threshold=0.9):
+    bbox = (300, 52, 450, 90)
+    target_area_img = get_screenshot(bbox)
+    # cv2.imshow('target_area', target_area_img)
+    # cv2.imwrite("Source_img/Target_2.jpg", target_area_img)
+    # cv2.waitKey(0)
+    temp_dead = cv2.imread("Source_img/dead.jpg")
+    res = cv2.matchTemplate(target_area_img, temp_dead, cv2.TM_CCOEFF_NORMED)
+    confidence_dead = np.max(res)
+    if dead:
+        return confidence_dead > 0.5
+
+    # yellow names
+    temp_img1 = cv2.imread("Source_img/Target_1.jpg")
+    res1 = cv2.matchTemplate(target_area_img, temp_img1, cv2.TM_CCOEFF_NORMED)
+    confidence1 = np.max(res1)
+    # red names
+    temp_img2 = cv2.imread("Source_img/Target_2.jpg")
+    res2 = cv2.matchTemplate(target_area_img, temp_img2, cv2.TM_CCOEFF_NORMED)
+    confidence2 = np.max(res2)
+    if confidence1 > threshold or confidence2 > threshold:
+        return True
+    else:
+        return False
+
+
+def get_skill_num_img(index):
+    size = 49.5 * (int(index) - 1)
+    bbox = (395 + size, 987, 402 + size, 998)
+    skill_num_img = get_screenshot(bbox)
+    return skill_num_img
+    # cv2.imshow('target_area', skill_num_img)
+    # cv2.imwrite("Source_img/"+str(index+1)+"_1.jpg", skill_num_img)
+    # cv2.waitKey(0)
+
+
+def skill_in_range(index=1):
+    skill_num_img = get_skill_num_img(index)
+    # avaiable
+    available_img = cv2.imread("Source_img/" + str(index) + "_0.jpg")
+    available_res = cv2.matchTemplate(skill_num_img, available_img, cv2.TM_CCOEFF_NORMED)
+    available_confidence = np.max(available_res)
+    # unavailable
+    unavailable_img = cv2.imread("Source_img/" + str(index) + "_1.jpg")
+    unavailable_res = cv2.matchTemplate(skill_num_img, unavailable_img, cv2.TM_CCOEFF_NORMED)
+    unavailable_confidence = np.max(unavailable_res)
+
+    return available_confidence > unavailable_confidence
+
 
 if __name__ == '__main__':
-    print(get_delta_angle(340, 10))
+    print(find_target(dead=False))

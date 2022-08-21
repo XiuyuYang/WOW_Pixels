@@ -222,7 +222,7 @@ class Arrow:
         self.player_arrow_img = None
         self.template_arrow = None
         self.minimap_img = None
-        self.template_arrow_path = "minimap_img/PlayerTemplate.jpg"
+        self.template_arrow_path = "Source_img/PlayerTemplate.jpg"
         self.player_arrow_size = 20
 
     def get_template_arrow(self):
