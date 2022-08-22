@@ -1,14 +1,25 @@
+import time
+
 import cv2
 import keyboard
+import easyocr
 import numpy as np
 import win32gui
 from PIL import ImageGrab
+
+reader = None
 
 
 def set_foreground():
     hwnd = win32gui.FindWindow(None, '魔兽世界')
     if hwnd:
         win32gui.SetForegroundWindow(hwnd)
+
+
+def init_ocr():
+    # init ocr
+    global reader
+    reader = easyocr.Reader(['ch_sim'])
 
 
 def get_screenshot(bbox):
@@ -48,7 +59,7 @@ def get_delta_angle(angle1, angle2):
         return angle
 
 
-def find_target(dead=False, threshold=0.9):
+def find_target(dead=False, threshold=0.9, skip=[]):
     bbox = (300, 52, 450, 90)
     target_area_img = get_screenshot(bbox)
     # cv2.imshow('target_area', target_area_img)
@@ -69,9 +80,25 @@ def find_target(dead=False, threshold=0.9):
     res2 = cv2.matchTemplate(target_area_img, temp_img2, cv2.TM_CCOEFF_NORMED)
     confidence2 = np.max(res2)
     if confidence1 > threshold or confidence2 > threshold:
-        return True
+        name = read_target_name()
+        if name not in skip:
+            return True
     else:
         return False
+
+
+def read_target_name():
+    t = time.time()
+    bbox = (300, 52, 450, 90)
+    target_area_img = get_screenshot(bbox)
+    img = cv2.split(target_area_img)[1]
+    # result = reader.readtext(img)[0][1]
+    result = reader.readtext(img)
+    if result:
+        result = reader.readtext(img)[0][1]
+        return result.strip(".")
+    else:
+        return None
 
 
 def get_skill_num_img(index):
@@ -98,5 +125,19 @@ def skill_in_range(index=1):
     return available_confidence > unavailable_confidence
 
 
+def spelling_check():
+    bbox = (1072, 822, 1080, 850)
+    spell_img = get_screenshot(bbox)
+    # cv2.imshow('target_area', spell_img)
+    # cv2.imwrite("Source_img/spelling.jpg", spell_img)
+    # cv2.waitKey(1)
+    spell_temp_img = cv2.imread("Source_img/spelling.jpg")
+    res = cv2.matchTemplate(spell_img, spell_temp_img, cv2.TM_CCOEFF_NORMED)
+    confidence = np.max(res)
+    return confidence > 0.8
+
+
 if __name__ == '__main__':
-    print(find_target(dead=False))
+    # print(find_target(dead=False))
+    print(read_target_name())
+    # print(find_target(dead=True,threshold=0.5))

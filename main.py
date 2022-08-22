@@ -2,23 +2,22 @@ import keyboard
 import time
 import attack
 import move
+import minimap
 import utilities
-from minimap import MiniMap
-from utilities import set_foreground
 
-mm = MiniMap()
+
+mm = minimap.MiniMap()
 mv = move.Move()
 mv.minimap = mm
-mm.init_path()
 
-at = attack.Magic()
 
-if __name__ == '__main__':
-    set_foreground()
+def run():
+    utilities.init_ocr()
+    time.sleep(1)
+    mm.init_path()
+    at = attack.Magic()
+    # at.need_loot = True
     while True:
-        # user stop by press ","
-        if keyboard.is_pressed(","):
-            mv.stop_moving()
         # find target then attack
         if at.search_target():
             print("found the target.")
@@ -31,6 +30,16 @@ if __name__ == '__main__':
         else:
             mv.patrol()
 
-            # mm.record_path()
 
-        mm.show_minimap()
+def record():
+    while True:
+        mm.record_path()
+
+
+if __name__ == '__main__':
+    utilities.set_foreground()
+
+    run()
+    # record()
+
+    # mm.show_minimap()

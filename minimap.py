@@ -155,6 +155,7 @@ class MiniMap:
         if not os.path.isfile(self.save_path + "/" + self.current_path_fname):
             self.current_path_fname = fname + "_0.jpg"
         self.load_path_img(self.current_path_fname)
+        print("next path:", self.current_path_fname)
 
     def load_path_img_list(self):
         for (dirpath, dirnames, filenames) in os.walk(self.save_path):

@@ -8,10 +8,11 @@ from utilities import get_delta_angle
 
 class Move:
     def __init__(self):
-        self.right_btn_is_pressed = False  # mouse.is_pressed seems does not work here so i set a flag
+        self.right_btn_is_pressed = False  # mouse.is_pressed seems does not work here, so I set a flag
         self.move_mouse_pos = (1000, 500)
         self.minimap = None
         self.rotate_speed = 2
+        mouse.move(self.move_mouse_pos[0], self.move_mouse_pos[1])
 
     def rotate_to(self):
         self.minimap.get_target()
@@ -46,12 +47,14 @@ class Move:
         return delta_angle
 
     def move_forward_patrol(self):
+        keyboard.press_and_release("space")
         keyboard.press("w")
         if self.minimap.distance < 2:
             # print("arrived", self.minimap.current_path_fname)
             self.minimap.load_next_path_img()
 
     def move_forward(self):
+        keyboard.press_and_release("space")
         if not keyboard.is_pressed("w"):
             keyboard.press("w")
 
@@ -64,8 +67,8 @@ class Move:
         keyboard.release("w")
         # press w one more time for stop moving from right click or interact with target
         keyboard.press_and_release("w")
-        if utilities.find_target(dead=True):
-            keyboard.press_and_release("tab")
+        # if utilities.find_target(dead=True):
+        #     keyboard.press_and_release("tab")
 
     def patrol(self):
         self.minimap.get_minimap()
