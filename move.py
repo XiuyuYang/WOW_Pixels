@@ -8,7 +8,7 @@ from utilities import get_delta_angle
 
 class Move:
     def __init__(self):
-        self.right_btn_is_pressed = False  # mouse.is_pressed seems does not work here, so I set a flag
+        # self.right_btn_is_pressed = False  # mouse.is_pressed seems does not work here, so I set a flag
         self.move_mouse_pos = (1000, 500)
         self.minimap = None
         self.rotate_speed = 2
@@ -20,32 +20,42 @@ class Move:
         self.minimap.get_orientation()
         delta_angle = get_delta_angle(self.minimap.orientation, self.minimap.move_angle)
         if delta_angle < 2:
-            if self.right_btn_is_pressed:
-                mouse.release("right")
-                self.right_btn_is_pressed = False
+            self.mouse_release_right()
             return delta_angle
 
-        if not self.right_btn_is_pressed:
-            mouse.move(self.move_mouse_pos[0], self.move_mouse_pos[1])
-            mouse.press("right")
-            self.right_btn_is_pressed = True
+        # if not self.right_btn_is_pressed:
+        #     self.mouse_press_right()
         pos = mouse.get_position()
 
         # rotate to left or right
         if self.minimap.orientation < 180 \
                 and self.minimap.move_angle - self.minimap.orientation < 180 \
                 and self.minimap.move_angle > self.minimap.orientation:
-            rotate_value = delta_angle
+            rotate_value = 1
         elif 180 < self.minimap.orientation < self.minimap.move_angle:
-            rotate_value = delta_angle
+            rotate_value = 1
         elif self.minimap.orientation > 180 and self.minimap.move_angle < self.minimap.orientation - 180:
-            rotate_value = delta_angle
+            rotate_value = 1
         else:
-            rotate_value = -1 * delta_angle
-
+            rotate_value = -1
+        # rotate_value = rotate_value*(delta_angle/3+2)
+        rotate_value = rotate_value * delta_angle
+        mouse.press("right")
         mouse.move(pos[0] + rotate_value * self.rotate_speed, pos[1])
+        time.sleep(1/60)
+        print("rotating:", rotate_value * self.rotate_speed, "distance:", int(self.minimap.distance),"delta_angle:",delta_angle)
         return delta_angle
 
+    def mouse_press_right(self):
+        print("move to screen middle and right click.")
+        mouse.move(self.move_mouse_pos[0], self.move_mouse_pos[1])
+        # self.right_btn_is_pressed = True
+        mouse.press("right")
+        time.sleep(0.5)
+
+    def mouse_release_right(self):
+        # self.right_btn_is_pressed=False
+        mouse.release("right")
     def move_forward_patrol(self):
         keyboard.press_and_release("space")
         keyboard.press("w")
@@ -58,7 +68,7 @@ class Move:
         if not keyboard.is_pressed("w"):
             keyboard.press("w")
 
-    def rotate_to_target(self):
+    def interact_target(self):
         interact_key = "."
         keyboard.press_and_release(interact_key)
 
@@ -79,7 +89,7 @@ class Move:
         while True:
             if not utilities.skill_in_range(index):
                 print("target is out of range, moving to the target.")
-                self.rotate_to_target()
+                self.interact_target()
                 self.move_forward()
                 time.sleep(1)
             else:
@@ -87,23 +97,10 @@ class Move:
                 return
 
     def move_back(self):
-        self.minimap.get_target()
-        if self.minimap.distance > 2:
-            print("coming back. distance:", self.minimap.distance)
-            self.right_btn_is_pressed = False
-            self.minimap.get_minimap()
-            self.rotate_speed = 1
-            while True:
-                angle = self.rotate_to()
-                # print(angle)
-                if angle < 2:
-                    self.rotate_speed = 2
-                    break
-            # while True:
-            #     self.minimap.get_target()
-            #     if self.minimap.distance > 2:
-            #         self.move_forward_patrol()
-            #     else:
-            #         break
-            self.move_forward_patrol()
-        print("moved back.")
+        mouse.move(self.move_mouse_pos[0], self.move_mouse_pos[1])
+        mouse.press("right")
+        while True:
+            self.patrol()
+            if self.minimap.distance < 5:
+                print("moved back.")
+                return

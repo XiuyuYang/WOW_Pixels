@@ -5,10 +5,15 @@ import move
 import minimap
 import utilities
 
-
 mm = minimap.MiniMap()
 mv = move.Move()
 mv.minimap = mm
+
+
+def just_patrol():
+    mm.init_path()
+    while True:
+        mv.patrol()
 
 
 def run():
@@ -16,7 +21,7 @@ def run():
     time.sleep(1)
     mm.init_path()
     at = attack.Magic()
-    # at.need_loot = True
+    at.need_loot = True
     while True:
         # find target then attack
         if at.search_target():
@@ -41,5 +46,6 @@ if __name__ == '__main__':
 
     run()
     # record()
+    # just_patrol()
 
-    # mm.show_minimap()
+    mm.show_minimap()
