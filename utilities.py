@@ -54,11 +54,12 @@ def get_delta_angle(angle1, angle2):
         return angle
 
 
-def find_target(dead=False, threshold=0.7, skip=[]):
+def find_target(dead=False, threshold=0.75, skip=[]):
     bbox = (300, 52, 450, 90)
     target_area_img = get_screenshot(bbox)
     confidence_dead = compair_imgs("Source_img/dead.jpg", target_area_img)
     if dead:
+        print(confidence_dead)
         return confidence_dead > 0.5
 
     # yellow names
@@ -173,4 +174,4 @@ def mount():
 
 if __name__ == '__main__':
     set_foreground()
-    print(read_target_name())
+    print()

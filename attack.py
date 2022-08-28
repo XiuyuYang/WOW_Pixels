@@ -22,6 +22,7 @@ class Attack:
         self.skinning = False
 
     def search_target(self):
+        # print("searching target.")
         key = "tab"
         keyboard.press_and_release(key)
         time.sleep(0.2)
@@ -31,6 +32,52 @@ class Attack:
             return True
         else:
             return False
+
+    def attack(self):
+        self.mv.stop_moving()
+        utilities.run_macro('''/script SetRaidTarget('target', 8);''')
+        while True:
+            # make sure not too far
+            if not utilities.skill_in_range("1"):
+                print("skill not in range, moving.")
+                self.mv.go_to_target_range("1")
+            # skip when spelling
+            if utilities.spelling_check():
+                continue
+            # attack
+            else:
+                self.face_to_target()
+                self.attack_loop()
+                if self.check_overtime(wait=20):
+                    print("Cannot attack the target.")
+                    utilities.run_macro("/cleartarget")
+                    self.update_fight_time(reset=True)
+                    return
+            # check if target dead
+            if not utilities.find_target(dead=False, threshold=0.5):
+                # multi target
+                time.sleep(1)
+                # if add target will show up
+                if not utilities.find_target(dead=False, threshold=0.5):
+                    self.update_fight_time(reset=True)
+                    break
+                else:
+                    return
+
+        self.loot()
+        self.skin()
+        self.recover()
+
+        self.after_battle()
+
+    def attack_loop(self):
+        pass
+
+    def after_battle(self):
+        pass
+
+    def cast(self, key):
+        keyboard.press_and_release(key)
 
     @staticmethod
     def check_stat(stat_type):
@@ -128,7 +175,7 @@ class Attack:
             if not utilities.find_target(dead=True, threshold=0.5):
                 print("got items.")
                 break
-            if time.time()-dead_time > 8:
+            if time.time() - dead_time > 8:
                 print("loot over time, continue.")
                 utilities.run_macro("/cleartarget")
                 break
@@ -138,22 +185,24 @@ class Attack:
         time.sleep(0.5)
         print("skinning.")
         if self.skinning:
-            skinable = True
+            skinable = None
             while True:
                 keyboard.press_and_release("g")
                 time.sleep(0.1)
                 self.mv.interact_target()
                 time.sleep(2)
-                skinable = utilities.spelling_check()
+                if skinable is None:
+                    skinable = utilities.spelling_check()
                 if not skinable:
                     print("target is not skinable.")
                     utilities.run_macro("/cleartarget")
                     return
-                time.sleep(1)
+                time.sleep(2)
                 if not utilities.find_target(dead=True, threshold=0.5):
                     utilities.run_macro("/cleartarget")
                     break
                 print("skin failed, try again.")
+            print("skin successful.")
 
     def update_fight_time(self, reset=False):
         if reset:
@@ -166,7 +215,7 @@ class Attack:
             self.start_fight = time.time()
             return
         fight_time = time.time() - self.start_fight
-        # print("fight_time:", fight_time)
+        print("fight_time:", fight_time)
         if fight_time > wait and (self.target_hp == 100):
             return True
         else:
@@ -177,43 +226,10 @@ class Magic(Attack):
     def __init__(self):
         super(Magic, self).__init__()
 
-    def cast(self, key):
-        keyboard.press_and_release(key)
+    def attack_loop(self):
+        self.cast("1")
 
-    def attack(self):
-        self.mv.stop_moving()
-        utilities.run_macro('''/script SetRaidTarget('target', 8);''')
-        while True:
-            # make sure not too far
-            if not utilities.skill_in_range("1"):
-                print("skill not in range, moving.")
-                self.mv.go_to_target_range("1")
-            # skip when spelling
-            if utilities.spelling_check():
-                continue
-            # attack
-            else:
-                self.face_to_target()
-                self.cast("1")
-                if self.check_overtime(wait=10):
-                    print("Cannot attack the target.")
-                    utilities.run_macro("/cleartarget")
-                    self.update_fight_time(reset=True)
-                    return
-            # check if target dead
-            if not utilities.find_target(dead=False, threshold=0.5):
-                # multi target
-                time.sleep(1)
-                # if add target will show up
-                if not utilities.find_target(dead=False, threshold=0.5):
-                    self.update_fight_time(reset=True)
-                    break
-                else:
-                    return
-
-        self.loot()
-        self.skin()
-        self.recover()
+    def after_battle(self):
         self.make_supply()
 
     @staticmethod
@@ -235,11 +251,58 @@ class Magic(Attack):
             time.sleep(3.5)
 
 
+class Druid(Attack):
+    def __init__(self):
+        super(Druid, self).__init__()
+
+    def attack(self):
+        self.mv.stop_moving()
+        utilities.run_macro('''/script SetRaidTarget('target', 8);''')
+        while True:
+            self.face_to_target()
+            if self.check_overtime(wait=20):
+                print("Cannot attack the target.")
+                utilities.run_macro("/cleartarget")
+                self.update_fight_time(reset=True)
+                return
+            # check if target dead
+            if not utilities.find_target(dead=False, threshold=0.7):
+                break
+            self.attack_loop()
+        self.update_fight_time(reset=True)
+
+        time.sleep(2)
+        self.loot()
+        self.skin()
+        self.recover()
+
+        self.after_battle()
+
+    def attack_loop(self):
+        print("attacking")
+        time.sleep(1.5)
+        keyboard.press_and_release(".")
+        self.cast("1")
+        if self.check_hp() < 50:
+            self.cast("9")
+
+    def recover(self):
+        hp = self.check_hp()
+        print("hp:", int(hp))
+
+        if hp < self.min_hp:
+            # time.sleep(2)  # sleep for delay, GCD or jump
+            if hp < self.min_hp:
+                print("need hp")
+                keyboard.press_and_release(12)
+                time.sleep(3.5)
+                self.cast("5")
+
+
 if __name__ == '__main__':
     utilities.set_foreground()
-    m = Magic()
-    m.recover()
-    # print(m.check_stat("enimy"))
+    m = Druid()
+    print(utilities.find_target(dead=True, threshold=0.5))
     # print(m.check_stat("hp"))
     # print(m.check_stat("mp"))
     # for i in range(10):

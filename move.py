@@ -16,17 +16,14 @@ class Move:
         mouse.move(self.move_mouse_pos[0], self.move_mouse_pos[1])
 
     def rotate_to(self):
-        self.minimap.get_target()
-        self.minimap.get_minimap()
-        self.minimap.get_orientation()
         delta_angle = get_delta_angle(self.minimap.orientation, self.minimap.move_angle)
         if delta_angle < 2:
             # self.mouse_release_right()
+            print("return rotate_to func")
             return delta_angle
 
-        # if not self.right_btn_is_pressed:
-        #     self.mouse_press_right()
         pos = mouse.get_position()
+        print(pos,mouse.is_pressed("right"))
 
         # rotate to left or right
         if self.minimap.orientation < 180 \
@@ -41,10 +38,6 @@ class Move:
             rotate_value = -1
         rotate_value = rotate_value * delta_angle
         mouse.move(pos[0] + rotate_value * self.rotate_speed, pos[1])
-        if self.minimap.distance > 20:
-            print(self.minimap.distance, rotate_value, delta_angle)
-            while self.rotate_to() < 2:
-                break
         return delta_angle
 
     def mouse_press_right(self):
@@ -79,10 +72,15 @@ class Move:
 
     def patrol(self):
         self.stuck()
+
+        self.minimap.get_target()
         self.minimap.get_minimap()
-        self.rotate_to()
+        self.minimap.get_orientation()
+
+        delta_angle = self.rotate_to()
         self.move_forward()
-        if self.minimap.distance < 2:
+        print("distance:", int(self.minimap.distance), "delta:", delta_angle)
+        if self.minimap.distance < 5:
             # print("arrived", self.minimap.current_path_fname)
             self.minimap.load_next_path_img()
             self.move_time = time.time()
@@ -107,7 +105,7 @@ class Move:
         self.mouse_press_right()
         while True:
             self.patrol()
-            if self.minimap.distance < 3:
+            if self.minimap.distance < 10:
                 print("moved back.")
                 return
 
@@ -124,3 +122,9 @@ class Move:
             time.sleep(3)
             keyboard.release("w")
             self.move_time = time.time()
+
+
+if __name__ == '__main__':
+    time.sleep(4)
+    pos = mouse.get_position()
+    mouse.move(pos[0] + 800, pos[1], duration=1)

@@ -22,7 +22,8 @@ def just_patrol():
 def run():
     time.sleep(1)
     mm.init_path()
-    at = attack.Magic()
+    # at = attack.Magic()
+    at = attack.Druid()
     at.need_loot = True
     at.skinning = True
     mv.mouse_press_right()
