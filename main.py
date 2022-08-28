@@ -1,5 +1,8 @@
 import keyboard
 import time
+
+import mouse
+
 import attack
 import move
 import minimap
@@ -17,19 +20,18 @@ def just_patrol():
 
 
 def run():
-    utilities.init_ocr()
     time.sleep(1)
     mm.init_path()
     at = attack.Magic()
     at.need_loot = True
+    at.skinning = True
+    mv.mouse_press_right()
+    utilities.mount()
     while True:
         # find target then attack
         if at.search_target():
-            print("found the target.")
             # found target
-            mv.stop_moving()
             at.attack()
-            print("finished combat, coming back.")
             mv.move_back()
         # patrol
         else:
@@ -37,6 +39,7 @@ def run():
 
 
 def record():
+    utilities.mount()
     while True:
         mm.record_path()
 

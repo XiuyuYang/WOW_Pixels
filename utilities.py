@@ -8,19 +8,13 @@ import numpy as np
 import win32gui
 from PIL import ImageGrab
 
-reader = None
+reader = easyocr.Reader(['ch_sim'])
 
 
 def set_foreground():
     hwnd = win32gui.FindWindow(None, '魔兽世界')
     if hwnd:
         win32gui.SetForegroundWindow(hwnd)
-
-
-def init_ocr():
-    # init ocr
-    global reader
-    reader = easyocr.Reader(['ch_sim'])
 
 
 def get_screenshot(bbox):
@@ -60,7 +54,7 @@ def get_delta_angle(angle1, angle2):
         return angle
 
 
-def find_target(dead=False, threshold=0.9, skip=[]):
+def find_target(dead=False, threshold=0.7, skip=[]):
     bbox = (300, 52, 450, 90)
     target_area_img = get_screenshot(bbox)
     confidence_dead = compair_imgs("Source_img/dead.jpg", target_area_img)
@@ -71,6 +65,7 @@ def find_target(dead=False, threshold=0.9, skip=[]):
     confidence1 = compair_imgs("Source_img/Target_1.jpg", target_area_img)
     # red names
     confidence2 = compair_imgs("Source_img/Target_2.jpg", target_area_img)
+    # print(confidence1,confidence2)
     if confidence1 > threshold or confidence2 > threshold:
         name = read_target_name()
         if name:
@@ -82,6 +77,7 @@ def find_target(dead=False, threshold=0.9, skip=[]):
         else:
             print("target name read error.")
             return True
+        # return True
     else:
         return False
 
@@ -90,13 +86,13 @@ def read_target_name():
     bbox = (300, 52, 450, 90)
     target_area_img = get_screenshot(bbox)
     img = cv2.split(target_area_img)[1]
-    # result = reader.readtext(img)[0][1]
     try:
         result = reader.readtext(img)
     except:
         result = None
     if result:
         result = reader.readtext(img)[0][1]
+        print(result)
         return result.strip(".")
     else:
         return None
@@ -170,6 +166,11 @@ def run_macro(macro_str):
     keyboard.press_and_release("enter")
 
 
+def mount():
+    keyboard.press_and_release("8")
+    time.sleep(3)
+
+
 if __name__ == '__main__':
     set_foreground()
-    run_macro('''/script SetRaidTarget('target', 8);''')
+    print(read_target_name())

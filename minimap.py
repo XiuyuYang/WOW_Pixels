@@ -13,7 +13,7 @@ class MiniMap:
         self.current_path_fname = None
         self.path_img_list = []
         self.record_img_index = 1
-        self.record_distance = 3
+        self.record_distance = 8
         self.path_img = None
         self.anchors = []
         self.orientation = None
