@@ -26,6 +26,7 @@ class Attack:
         key = "tab"
         keyboard.press_and_release(key)
         time.sleep(0.2)
+        keyboard.press_and_release("2")
         if utilities.find_target(skip=skip):
             self.face_to_target(force=True)
             print("found the target.")
@@ -51,6 +52,7 @@ class Attack:
                 if self.check_overtime(wait=20):
                     print("Cannot attack the target.")
                     utilities.run_macro("/cleartarget")
+                    self.mv.stuck()
                     self.update_fight_time(reset=True)
                     return
             # check if target dead
@@ -199,7 +201,6 @@ class Attack:
                     return
                 time.sleep(2)
                 if not utilities.find_target(dead=True, threshold=0.5):
-                    utilities.run_macro("/cleartarget")
                     break
                 print("skin failed, try again.")
             print("skin successful.")
@@ -215,7 +216,7 @@ class Attack:
             self.start_fight = time.time()
             return
         fight_time = time.time() - self.start_fight
-        print("fight_time:", fight_time)
+        # print("fight_time:", fight_time)
         if fight_time > wait and (self.target_hp == 100):
             return True
         else:
@@ -258,11 +259,13 @@ class Druid(Attack):
     def attack(self):
         self.mv.stop_moving()
         utilities.run_macro('''/script SetRaidTarget('target', 8);''')
+        utilities.run_macro('''/startattack''')
         while True:
             self.face_to_target()
             if self.check_overtime(wait=20):
                 print("Cannot attack the target.")
                 utilities.run_macro("/cleartarget")
+                self.mv.stuck()
                 self.update_fight_time(reset=True)
                 return
             # check if target dead
@@ -279,16 +282,17 @@ class Druid(Attack):
         self.after_battle()
 
     def attack_loop(self):
-        print("attacking")
-        time.sleep(1.5)
+        # print("attacking")
+        time.sleep(1)
         keyboard.press_and_release(".")
         self.cast("1")
+        self.recover()
         if self.check_hp() < 50:
             self.cast("9")
 
     def recover(self):
         hp = self.check_hp()
-        print("hp:", int(hp))
+        # print("hp:", int(hp))
 
         if hp < self.min_hp:
             # time.sleep(2)  # sleep for delay, GCD or jump

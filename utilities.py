@@ -76,7 +76,7 @@ def find_target(dead=False, threshold=0.75, skip=[]):
                     return False
             return True
         else:
-            print("target name read error.")
+            # print("target name read error.")
             return True
         # return True
     else:

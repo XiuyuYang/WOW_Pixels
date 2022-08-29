@@ -71,7 +71,8 @@ class Move:
         #     keyboard.press_and_release("tab")
 
     def patrol(self):
-        self.stuck()
+        if time.time() - self.move_time > 30:
+            self.stuck()
 
         self.minimap.get_target()
         self.minimap.get_minimap()
@@ -110,18 +111,18 @@ class Move:
                 return
 
     def stuck(self):
-        if time.time() - self.move_time > 30:
-            keyboard.press_and_release("w")
-            keyboard.press("s")
-            time.sleep(3)
-            keyboard.release("s")
-            keyboard.press("a")
-            time.sleep(3)
-            keyboard.release("a")
-            keyboard.press("w")
-            time.sleep(3)
-            keyboard.release("w")
-            self.move_time = time.time()
+        print("stucked.")
+        keyboard.press_and_release("w")
+        keyboard.press("s")
+        time.sleep(3)
+        keyboard.release("s")
+        keyboard.press("a")
+        time.sleep(3)
+        keyboard.release("a")
+        keyboard.press("w")
+        time.sleep(3)
+        keyboard.release("w")
+        self.move_time = time.time()
 
 
 if __name__ == '__main__':
