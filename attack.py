@@ -283,10 +283,11 @@ class Druid(Attack):
 
     def attack_loop(self):
         # print("attacking")
+        keyboard.press("space")
         time.sleep(1)
         keyboard.press_and_release(".")
         self.cast("1")
-        self.recover()
+        keyboard.release("space")
         if self.check_hp() < 50:
             self.cast("9")
 

@@ -23,7 +23,6 @@ class Move:
             return delta_angle
 
         pos = mouse.get_position()
-        print(pos,mouse.is_pressed("right"))
 
         # rotate to left or right
         if self.minimap.orientation < 180 \

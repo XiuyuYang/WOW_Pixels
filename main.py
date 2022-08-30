@@ -52,4 +52,4 @@ if __name__ == '__main__':
     # record()
     # just_patrol()
 
-    mm.show_minimap()
+    # mm.show_minimap()
